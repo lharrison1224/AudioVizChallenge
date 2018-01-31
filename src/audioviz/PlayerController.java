@@ -5,17 +5,21 @@
  */
 package audioviz;
 
+import com.sun.javafx.binding.StringFormatter;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -77,6 +81,8 @@ public class PlayerController implements Initializable {
     private ArrayList<Visualizer> visualizers;
     private Visualizer currentVisualizer;
     private final Integer[] bandsList = {1, 2, 4, 8, 16, 20, 40, 60, 100, 120, 140};
+    
+    private boolean beingDragged = false;
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -165,7 +171,7 @@ public class PlayerController implements Initializable {
     
     private void handleReady() {
         Duration duration = mediaPlayer.getTotalDuration();
-        lengthText.setText(duration.toString());
+        lengthText.setText(String.format("%.1f ms", duration.toMillis()));
         Duration ct = mediaPlayer.getCurrentTime();
         currentText.setText(ct.toString());
         currentVisualizer.start(numBands, vizPane);
@@ -174,16 +180,19 @@ public class PlayerController implements Initializable {
     }
     
     private void handleEndOfMedia() {
-        mediaPlayer.stop();
         mediaPlayer.seek(Duration.ZERO);
+        mediaPlayer.pause();
         timeSlider.setValue(0);
+        currentText.setText("0.0 ms");
     }
     
     private void handleUpdate(double timestamp, double duration, float[] magnitudes, float[] phases) {
         Duration ct = mediaPlayer.getCurrentTime();
         double ms = ct.toMillis();
-        currentText.setText(Double.toString(ms));
-        timeSlider.setValue(ms);
+        currentText.setText(String.format("%.1f ms", ms));
+        if(!beingDragged){
+            timeSlider.setValue(ms);
+        }
         
         currentVisualizer.update(timestamp, duration, magnitudes, phases);
     }
@@ -215,7 +224,27 @@ public class PlayerController implements Initializable {
     @FXML
     private void handleStop(ActionEvent event) {
         if (mediaPlayer != null) {
-           mediaPlayer.stop(); 
+           mediaPlayer.pause();
+           mediaPlayer.seek(Duration.ZERO);
+           currentText.setText("0.0 ms");
+           timeSlider.setValue(0.0);
+        }
+    }
+    
+    @FXML
+    private void handleDrag(){
+        if (mediaPlayer != null){
+            beingDragged = true;
+            
+        }
+    }
+    
+    @FXML
+    private void handleDragEnded(){
+        if (mediaPlayer != null){
+            beingDragged = false;
+            mediaPlayer.seek(new Duration(timeSlider.getValue()));
+            currentText.setText(String.format("%.1f", timeSlider.getValue()));
         }
     }
 }
