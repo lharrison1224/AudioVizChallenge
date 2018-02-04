@@ -82,8 +82,6 @@ public class PlayerController implements Initializable {
     private Visualizer currentVisualizer;
     private final Integer[] bandsList = {1, 2, 4, 8, 16, 20, 40, 60, 100, 120, 140};
     
-    private boolean beingDragged = false;
-    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         bandsText.setText(Integer.toString(numBands));
@@ -190,7 +188,7 @@ public class PlayerController implements Initializable {
         Duration ct = mediaPlayer.getCurrentTime();
         double ms = ct.toMillis();
         currentText.setText(String.format("%.1f ms", ms));
-        if(!beingDragged){
+        if(!timeSlider.isPressed()){
             timeSlider.setValue(ms);
         }
         
@@ -230,19 +228,10 @@ public class PlayerController implements Initializable {
            timeSlider.setValue(0.0);
         }
     }
-    
-    @FXML
-    private void handleDrag(){
-        if (mediaPlayer != null){
-            beingDragged = true;
-            
-        }
-    }
-    
+     
     @FXML
     private void handleDragEnded(){
         if (mediaPlayer != null){
-            beingDragged = false;
             mediaPlayer.seek(new Duration(timeSlider.getValue()));
             currentText.setText(String.format("%.1f", timeSlider.getValue()));
         }
